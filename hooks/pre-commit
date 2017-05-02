@@ -1,0 +1,45 @@
+# run the tests with the gradle wrapper
+./gradlew javapromiseandroid:test
+
+# store the last exit code in a variable
+RESULT=$?
+
+# get current branch name
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+echo "Current branch: ${BRANCH}"
+
+# if tests passed and we're on the master branch, increment version
+bintray='javapromiseandroid/bintray.gradle' 
+if [ $RESULT -eq 0 ]
+  then
+    echo "Tests passed"
+
+    if [ "$BRANCH" != "master" ]
+        then
+          echo "Not on master branch. Exiting without updating version number"
+          exit $RESULT
+    fi
+
+    echo "Incrementing bintray version number"
+
+    echo "Bintray: $bintray "
+    currentVersion=`grep version $bintray|sed 's/[^0-9\.]//g'`
+    versionParts=( ${currentVersion//./ } )
+    ((versionParts[2]++))
+
+    echo $versionParts
+    newVersion="${versionParts[0]}.${versionParts[1]}.${versionParts[2]}"
+    echo "NEW VERSION: $newVersion"
+
+    cp $bintray /tmp/bintray
+    if sed -E "/version/ s/([0-9]+\.){2}[0-9]+/${newVersion}/" < /tmp/bintray > $bintray
+      then    
+          echo "Updated version number from $currentVersion to $newVersion"
+          git add $bintray
+    else
+      echo "There was a problem updating $bintray to build $newVersion"
+    fi
+fi
+
+# return the './gradlew test' exit code
+exit $RESULT

@@ -1,0 +1,39 @@
+apply plugin: 'com.github.dcendents.android-maven'
+
+group = 'com.nascentdigital'
+
+install {
+    repositories.mavenInstaller {
+        pom {
+            project {
+                packaging 'aar'
+                groupId 'com.nascentdigital'
+                artifactId 'standby'
+
+                name 'Standby'
+                description 'A beautifully written Promise library for Java'
+                url 'https://github.com/nascentdigital/standby.git'
+
+                licenses {
+                    license {
+                        name 'MIT License'
+                        url 'https://github.com/nascentdigital/standby/blob/master/LICENSE'
+                    }
+                }
+                developers {
+                    developer {
+                        id 'twillw'
+                        name 'Tom Wark'
+                        email 'twark@nascentdigital.com'
+                    }
+                }
+                scm {
+                    connection 'https://github.com/nascentdigital/standby.git'
+                    developerConnection 'https://github.com/nascentdigital/standby.git'
+                    url 'https://github.com/nascentdigital/standby'
+
+                }
+            }
+        }
+    }
+}
