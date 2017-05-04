@@ -1,6 +1,8 @@
 package com.nascentdigital.standby;
 
 
+import android.util.Log;
+
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -532,6 +534,43 @@ public class PromiseTest {
                 return null;
             });
         verify(mockList, timeout(5000).times(1)).add("This should happen");
+    }
+
+    @Test
+    public void errorBlock_shouldNotBeCalledIfErrorIsRecovered() {
+
+        List mockList = mock(List.class);
+
+        createAsyncPromise("Recovered Value")
+            .then(string -> {
+
+                return createAsyncPromise(null)
+                    .then(value -> {
+                        // won't get called
+                        mockList.add("This should not happen");
+
+                        return null;
+                    })
+                    .error((error, recovery) -> {
+                        // recover here
+                        mockList.add("Recovering");
+                        recovery.recover(string);
+                    });
+            })
+            .error((error, recovery) -> {
+                // this second error block should not be called
+                mockList.add("This should not happen");
+            })
+            .then(string -> {
+                // this should be called with Recovered Value
+                assertEquals(string, "Recovered Value");
+                mockList.add("This should happen");
+                return null;
+            });
+
+        verify(mockList, timeout(10000).times(1)).add("Recovering");
+        verify(mockList, timeout(10000).times(1)).add("This should happen");
+        verify(mockList, timeout(10000).times(0)).add("This should not happen");
     }
 
     private <T> Promise<T> createAsyncPromise(T testValue) {

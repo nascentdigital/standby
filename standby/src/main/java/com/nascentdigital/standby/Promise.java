@@ -357,11 +357,6 @@ public class Promise<T> {
                                 continuationDeferral.resolve(innerValue);
                                 return null;
                             })
-                            // FIXME: this error block doesn't get called if error has been consumed already
-                            // it should get called either way because we need the continuationDeferral to be rejected
-//                            .error(e -> {
-//                                continuationDeferral.reject(e);
-//                            })
                             .always(() -> {
                                 if (innerThenPromise.errorContext.error != null) {
 
@@ -489,6 +484,7 @@ public class Promise<T> {
 
         state = PromiseState.FULFILLED;
         this.value = value;
+        this.errorContext.error = null;
 
         invokeCompleteMethods(value, null);
     }
