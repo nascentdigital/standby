@@ -568,9 +568,9 @@ public class PromiseTest {
                 return null;
             });
 
-        verify(mockList, timeout(10000).times(1)).add("Recovering");
-        verify(mockList, timeout(10000).times(1)).add("This should happen");
-        verify(mockList, timeout(10000).times(0)).add("This should not happen");
+        verify(mockList, timeout(6000).times(1)).add("Recovering");
+        verify(mockList, timeout(6000).times(1)).add("This should happen");
+        verify(mockList, timeout(6000).times(0)).add("This should not happen");
     }
 
     private <T> Promise<T> createAsyncPromise(T testValue) {

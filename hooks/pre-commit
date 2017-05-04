@@ -1,5 +1,5 @@
 # run the tests with the gradle wrapper
-./gradlew javapromiseandroid:test
+./gradlew standby:test
 
 # store the last exit code in a variable
 RESULT=$?
@@ -9,7 +9,7 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 echo "Current branch: ${BRANCH}"
 
 # if tests passed and we're on the master branch, increment version
-bintray='javapromiseandroid/bintray.gradle' 
+bintray='standby/bintray.gradle'
 if [ $RESULT -eq 0 ]
   then
     echo "Tests passed"
