@@ -573,6 +573,25 @@ public class PromiseTest {
         verify(mockList, timeout(6000).times(0)).add("This should not happen");
     }
 
+    @Test
+    public void errorBlock_shouldNotBeCalledIfChainedOnAnErrorRecoveryBlock() {
+
+        List mockList = mock(List.class);
+
+        Promise.reject(new Exception())
+            .error((error, recovery) -> {
+
+                mockList.add("This should be called");
+            })
+            .error(error -> {
+
+                mockList.add("This should not be called");
+            });
+
+        verify(mockList, timeout(500).times(1)).add("This should be called");
+        verify(mockList, timeout(500).times(0)).add("This should not be called");
+    }
+
     private <T> Promise<T> createAsyncPromise(T testValue) {
 
         return new Promise<>(deferral -> {

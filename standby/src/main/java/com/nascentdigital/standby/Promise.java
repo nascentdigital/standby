@@ -532,12 +532,15 @@ public class Promise<T> {
                     U newValue = recovery.getValue();
                     return newValue;
                 }
-                // if no value was set, we return a rejected promise
+                // if no value was set, we mark the error as consumed because this error block has already handled it
                 catch (ValueNotFoundException e) {
-                    throw e;
+                    errorContext.consumed = true;
+                    return null;
                 }
 
-            } catch (Exception e) {
+            }
+            // if recoveryHandler threw uncaught exception just re-throw it
+            catch (Exception e) {
                 throw e;
             }
         }
