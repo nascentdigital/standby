@@ -67,6 +67,7 @@ public class Reuse {
         assertEquals(result1.value, Integer.valueOf(1));
     }
 
+    /*
     @Test
     public void error_shouldBeCalledTwice_whenParentIsReused() throws InterruptedException {
 
@@ -116,4 +117,5 @@ public class Reuse {
         assertNotNull(result1.value);
         assertNotNull(result2.value);
     }
+    */
 }
