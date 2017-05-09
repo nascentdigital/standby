@@ -7,6 +7,8 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.locks.Lock;
 
 import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertEquals;
@@ -583,10 +585,54 @@ public class PromiseTest {
 
                 mockList.add("This should be called");
             })
+            .then(value -> {
+                mockList.add("This should not be called");
+                return null;
+            })
             .error(error -> {
 
                 mockList.add("This should not be called");
             });
+
+        verify(mockList, timeout(500).times(1)).add("This should be called");
+        verify(mockList, timeout(500).times(0)).add("This should not be called");
+    }
+
+    @Test
+    public void async_errorBlock_shouldNotBeCalledIfChainedOnAnErrorRecoveryBlock() throws Exception {
+
+        List mockList = mock(List.class);
+
+        Thread[] box = new Thread[1];
+        new Promise<>(deferral -> {
+            box[0] = new Thread(() -> {
+                try {
+                    sleep(2000);
+                    deferral.reject(new Exception("TEST"));
+                }
+                catch (final InterruptedException exception) {
+
+                    deferral.reject(exception);
+                }
+            });
+
+            box[0].start();
+        })
+        .error((error, recovery) -> {
+
+            mockList.add("This should be called");
+        })
+        .then(value -> {
+            mockList.add("This should not be called");
+            return null;
+        })
+        .error(error -> {
+
+            mockList.add("This should not be called");
+        });
+
+        System.out.println("joining on thread");
+        box[0].join();
 
         verify(mockList, timeout(500).times(1)).add("This should be called");
         verify(mockList, timeout(500).times(0)).add("This should not be called");

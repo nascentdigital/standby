@@ -27,6 +27,7 @@ public class Promise<T> {
     private T value;
     ErrorContext errorContext;
 
+    // FIXME: these need to be synchronized
     private CatchHandler catchHandler;
     private RecoveryHandler recoveryHandler;
 
@@ -428,19 +429,20 @@ public class Promise<T> {
         this.recoveryHandler = recoveryHandler;
 
         // if promise has already been rejected and error has not already been consumed, just invoke handler
-        if (state == PromiseState.REJECTED) {
+        if (state == PromiseState.REJECTED && errorContext.consumed == false) {
 
-            if (errorContext.consumed == false) {
-                try {
-                    // invoke recoveryHandler
-                    U value = this.invokeRecoveryHandler(errorContext.error);
+            try {
+                // invoke recoveryHandler
+                U value = this.invokeRecoveryHandler(errorContext.error);
+                // if no value was returned from invoking the recovery handler a resolved promise should not be returned
+                if (value != null) {
                     return Promise.resolve(value);
-
-                } catch (Exception error) {
-                    errorContext.consumed = false;
-                    errorContext.error = error;
-                    return Promise.reject(error);
                 }
+
+            } catch (Exception error) {
+                errorContext.consumed = false;
+                errorContext.error = error;
+                return Promise.reject(error);
             }
         }
         return (Promise<U>)this;
@@ -472,6 +474,7 @@ public class Promise<T> {
         if (state == PromiseState.FULFILLED) {
             handler.onComplete(value, null);
         }
+        // if promise is rejected call done method
         else if (state == PromiseState.REJECTED) {
             handler.onComplete(null, errorContext.error);
         }
@@ -511,16 +514,17 @@ public class Promise<T> {
         if (newVal != null) {
             onResolved(newVal);
         }
-        // if error was not recovered, invoke error handler and complete methods
-        else {
+        // if error was not recovered and error hasn't been consumed invoke error handler
+        else if (errorContext.consumed == false) {
             invokeErrorHandler(error);
-            invokeCompleteMethods(null, error);
         }
+        // invoke complete methods
+        invokeCompleteMethods(null, error);
     }
 
     private <U> U invokeRecoveryHandler(Exception error) throws Exception {
 
-        if (recoveryHandler != null) {
+        if (recoveryHandler != null && errorContext.consumed == false) {
 
             try {
                 // invoke recoveryHandler
@@ -530,6 +534,7 @@ public class Promise<T> {
                 // check if value was set on recovery
                 try {
                     U newValue = recovery.getValue();
+                    errorContext.consumed = true;
                     return newValue;
                 }
                 // if no value was set, we mark the error as consumed because this error block has already handled it
