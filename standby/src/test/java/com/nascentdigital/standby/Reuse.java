@@ -25,7 +25,7 @@ public class Reuse {
 
         // add child 1
         Box<Integer> result1 = new Box<>();
-        Promise<Integer> promise1 = triggerPromise.promise
+        triggerPromise.promise
                 .then(result -> {
 
                     // assert
@@ -41,7 +41,7 @@ public class Reuse {
 
         // add child 2
         Box<Integer> result2 = new Box<>();
-        Promise<Integer> promise2 = triggerPromise.promise
+        triggerPromise.promise
                 .then(result -> {
 
                     // assert
