@@ -65,6 +65,10 @@ public class TriggeredPromise<T> {
         _thread.join();
     }
 
+    public void join(int timeoutMillis) throws InterruptedException {
+        _thread.join(timeoutMillis);
+    }
+
     // endregion
 
 

@@ -3,8 +3,6 @@ package com.nascentdigital.standby;
 
 import org.junit.Test;
 
-import java.util.concurrent.CountDownLatch;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -60,7 +58,7 @@ public class Reuse {
         triggerPromise.trigger();
 
         // wait
-        triggerPromise.join();
+        triggerPromise.join(10000);
 
         // assert
         assertEquals(result2.value, Integer.valueOf(2));

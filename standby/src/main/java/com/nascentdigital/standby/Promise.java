@@ -2,6 +2,7 @@ package com.nascentdigital.standby;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
@@ -31,7 +32,7 @@ public class Promise<T> {
     private CatchHandler catchHandler;
     private RecoveryHandler recoveryHandler;
 
-    private Done doneHandler;
+    private List<Done> doneHandlers;
     private Always alwaysHandler;
 
     // TODO: add some type of check that throws on multiple resolve / reject calls
@@ -84,8 +85,7 @@ public class Promise<T> {
     public Promise(Action action) {
 
         final Promise self = this;
-        // set done handler to no-op
-        doneHandler = (value, error) -> {};
+        doneHandlers = null;
 
         // set errorContext to new instance
         errorContext = new ErrorContext(null, false);
@@ -479,7 +479,14 @@ public class Promise<T> {
             handler.onComplete(null, errorContext.error);
         }
         else {
-            doneHandler = handler;
+
+            // ensure list is created
+            if (doneHandlers == null) {
+                doneHandlers = new ArrayList<>();
+            }
+
+            // add handler to chain
+            doneHandlers.add(handler);
         }
     }
 
@@ -579,8 +586,10 @@ public class Promise<T> {
         }
 
         // invoke final handler
-        if (doneHandler != null) {
-            doneHandler.onComplete(value, error);
+        if (doneHandlers != null) {
+            for (Done doneHandler : doneHandlers) {
+                doneHandler.onComplete(value, error);
+            }
         }
     }
 
