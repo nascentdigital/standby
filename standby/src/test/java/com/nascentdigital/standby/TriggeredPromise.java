@@ -44,7 +44,7 @@ public class TriggeredPromise<T> {
                 }
 
                 // reject if the trigger fails
-                catch (InterruptedException e) {
+                catch (Exception e) {
                     deferral.reject(e);
                 }
             });
@@ -76,7 +76,7 @@ public class TriggeredPromise<T> {
 
     public interface Factory<T> {
 
-        T create();
+        T create() throws Exception;
     }
 
     // endregion

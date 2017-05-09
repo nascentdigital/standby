@@ -4,6 +4,8 @@ package com.nascentdigital.standby;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
 /**
@@ -63,5 +65,55 @@ public class Reuse {
         // assert
         assertEquals(result2.value, Integer.valueOf(2));
         assertEquals(result1.value, Integer.valueOf(1));
+    }
+
+    @Test
+    public void error_shouldBeCalledTwice_whenParentIsReused() throws InterruptedException {
+
+        // create parent promise
+        TriggeredPromise<Boolean> triggerPromise = new TriggeredPromise<Boolean>(() -> {
+            throw new InstantiationException();
+        });
+
+        // add then handler
+        triggerPromise.promise.then(result -> {
+            fail("Unexpected callback: " + result);
+            return result;
+        });
+
+        // add child 1
+        Box<Exception> result1 = new Box<>();
+        triggerPromise.promise
+                .error(e -> {
+
+                    // assert
+                    assertSame(e.getClass(), InstantiationException.class);
+
+                    // capture value
+                    result1.value = e;
+                });
+
+
+        // add child 2
+        Box<Exception> result2 = new Box<>();
+        triggerPromise.promise
+                .error(e -> {
+
+                    // assert
+                    assertSame(e.getClass(), InstantiationException.class);
+
+                    // capture value
+                    result2.value = e;
+                });
+
+        // trigger
+        triggerPromise.trigger();
+
+        // wait
+        triggerPromise.join(10000);
+
+        // assert
+        assertNotNull(result1.value);
+        assertNotNull(result2.value);
     }
 }
