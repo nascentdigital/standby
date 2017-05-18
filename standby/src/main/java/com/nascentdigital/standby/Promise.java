@@ -109,8 +109,32 @@ public class Promise<TResult> {
 
     public Promise<TResult> error(ErrorBlock block) {
 
-        // create new ErrorPromise
-        ErrorPromise<TResult> errorPromise = new ErrorPromise<>(block);
+        // create new UnrecoverableErrorPromise
+        UnrecoverableErrorPromise<TResult> errorPromise = new UnrecoverableErrorPromise<>(block);
+
+        // if state is resolved, resolve errorPromise
+        if (_state == PromiseState.RESOLVED) {
+            errorPromise.onResolve(_result);
+        }
+
+        // if state is rejected execute errorPromise
+        else if (_state == PromiseState.REJECTED) {
+            errorPromise.execute(_rejection.share());
+        }
+
+        // if state is pending, add to list of errorPromises
+        else {
+            _errorPromises.add(errorPromise);
+        }
+
+        // return newly created errorPromise
+        return errorPromise;
+    }
+
+    public Promise<TResult> recover(RecoveryBlock block) {
+
+        // create new UnrecoverableErrorPromise
+        RecoverableErrorPromise<TResult> errorPromise = new RecoverableErrorPromise<>(block);
 
         // if state is resolved, resolve errorPromise
         if (_state == PromiseState.RESOLVED) {
