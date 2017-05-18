@@ -1,597 +1,207 @@
 package com.nascentdigital.standby;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReferenceArray;
-
 
 /**
- * Created by tomwark on 2016-12-06.
+ * Created by tomwark on 2017-05-18.
  */
 
-/**
- * TODO: add tap
- */
+public class Promise<TResult> {
 
-public class Promise<T> {
+    // region instance variables
 
-    private enum PromiseState {
-        PENDING,
-        FULFILLED,
-        REJECTED
+    protected final List<ThenPromise<TResult, ?>> _thenPromises;
+    protected final List<ErrorPromise<TResult>> _errorPromises;
+    protected final List<AlwaysPromise<TResult>> _alwaysPromises;
+
+    protected PromiseState _state;
+    protected TResult _result;
+    protected Rejection _rejection;
+
+    // endregion
+
+
+    // region constructors
+
+    protected Promise() {
+
+        // initialize instance variables
+        _thenPromises = new ArrayList<>();
+        _errorPromises = new ArrayList<>();
+        _alwaysPromises = new ArrayList<>();
+        _state = PromiseState.PENDING;
     }
 
-    private PromiseState state = PromiseState.PENDING;
-    private T value;
-    ErrorContext errorContext;
+    public Promise(DeferralBlock deferralBlock) {
 
-    // FIXME: these need to be synchronized
-    private CatchHandler catchHandler;
-    private RecoveryHandler recoveryHandler;
+        // call core constructor
+        this();
 
-    private List<Done> doneHandlers;
-    private Always alwaysHandler;
-
-    // TODO: add some type of check that throws on multiple resolve / reject calls
-    public static class Deferral {
-        public <T> void resolve(T value) {}
-        public void reject(Exception error) {}
+        // execute block
+        // TODO: add in logic to throw an exception if resolve or reject are called more than once
+        // TODO: wrap this in a try-catch to check for thrown exceptions in execute block
+        deferralBlock.execute(new Deferral<>(this));
     }
 
-    //region interfaces
+    // endregion
 
-    @FunctionalInterface
-    public interface Action {
-        void execute(Deferral deferral);
+
+    // region properties
+
+    public PromiseState getState() {
+        return _state;
     }
 
-    @FunctionalInterface
-    public interface Then<V> {
-        Object execute(V value) throws Exception;
+    // endregion
+
+
+    // region creation
+
+    public static <U> Promise<U> resolve(U value) {
+
+       // create new resolved promise
+        Promise<U> promise = new Promise<>();
+        promise.onResolve(value);
+
+        // return promise
+        return promise;
     }
 
-    @FunctionalInterface
-    public interface PromiseThen<U, V> {
-        Promise<U> execute(V value) throws Exception;
+    public static <U> Promise<U> reject(Exception error) {
+
+        // create and return new Promise that is rejected immediately
+        Promise<U> promise = new Promise<>();
+        promise.onReject(new Rejection(error));
+
+        // return promise
+        return promise;
     }
 
-    @FunctionalInterface
-    private interface Done<T> {
-        void onComplete(T value, Exception error);
-    }
+    // endregion
 
-    @FunctionalInterface
-    public interface CatchHandler {
-        void onError(Exception error) throws Exception;
-    }
 
-    @FunctionalInterface
-    public interface RecoveryHandler<U> {
-        void onError(Exception error, Recovery<U> recovery) throws Exception;
-    }
+    // region chaining
 
-    @FunctionalInterface
-    public interface Always {
-        void onComplete();
-    }
+    public <T> Promise<T> then(ThenBlock<TResult> block) {
 
-    //endregion
+        // create new ThenPromise
+        ThenPromise<TResult, T> thenPromise = new ThenPromise<>(block);
 
-    //region Constructors
-
-    public Promise(Action action) {
-
-        final Promise self = this;
-        doneHandlers = null;
-
-        // set errorContext to new instance
-        errorContext = new ErrorContext(null, false);
-
-        try {
-            action.execute(new Deferral() {
-                @Override
-                public <T> void resolve(T value) {
-                    self.onResolved(value);
-                }
-
-                @Override
-                public void reject(Exception error) {
-                    self.onRejected(error);
-                }
-            });
-        } catch (Exception e) {
-            self.onRejected(new PromiseInvocationException(e));
-        }
-    }
-
-    private Promise(ErrorContext errorContext, Action action) {
-
-        this(action);
-        this.errorContext = errorContext;
-    }
-
-    public static <T> Promise<T> resolve(T value) {
-        return new Promise<>(deferral -> {
-            deferral.resolve(value);
-        });
-    }
-
-    public static <T> Promise<T> reject(Exception error) {
-        return new Promise<T>(deferral -> {
-            deferral.reject(error);
-        });
-    }
-
-    //endregion
-
-    public static Promise<ArrayList<?>> all(Promise<?>[] promises) {
-
-        final int promiseCount = promises.length;
-        final AtomicInteger promisesComplete = new AtomicInteger(0);
-        final AtomicBoolean rejected = new AtomicBoolean(false);
-        final AtomicReferenceArray values = new AtomicReferenceArray(promiseCount);
-
-        return new Promise<>(deferral -> {
-
-            int promiseIndex = 0;
-            for (Promise promise: promises) {
-
-                final int finalPromiseIndex = promiseIndex;
-                promise.then(value -> {
-
-                    // if one of the promises have been rejected just bail out here
-                    if (rejected.get() == true) {
-                        return null;
-                    }
-
-                    // otherwise add value to list of values
-                    int currentPromiseCount = promisesComplete.incrementAndGet();
-                    values.set(finalPromiseIndex, value);
-
-                    // if all promises are complete then resolve wrapping promise with an array of the values
-                    if (currentPromiseCount == promiseCount) {
-
-                        @SuppressWarnings("unchecked")
-                        ArrayList finalValues = new ArrayList();
-                        for (int i=0; i < values.length(); i++) {
-                            finalValues.add(values.get(i));
-                        }
-                        deferral.resolve(finalValues);
-                    }
-                    return null;
-                })
-                .error(error -> {
-
-                    // if any promises are rejected, the wrapping promise is rejected immediately
-                    deferral.reject(error);
-                    rejected.set(true);
-                });
-
-                promiseIndex++;
-            }
-        });
-    }
-
-    public static Promise<ArrayList<?>> all(ArrayList<Promise<?>> promises) {
-
-        Promise[] promiseArray = new Promise[promises.size()];
-        for (int i=0; i<promises.size(); i++) {
-            promiseArray[i] = promises.get(i);
-        }
-        return Promise.all(promiseArray);
-    }
-
-    public static <T> Promise<ArrayList<T>> when(ArrayList<Promise<T>> promises) {
-
-        Promise<T>[] promiseArray = new Promise[promises.size()];
-        for (int i=0; i<promises.size(); i++) {
-            promiseArray[i] = promises.get(i);
-        }
-        return Promise.when(promiseArray);
-    }
-
-    public static <T> Promise<ArrayList<T>> when(Promise<T>[] promises) {
-
-        final int promiseCount = promises.length;
-        final AtomicInteger promisesComplete = new AtomicInteger(0);
-        final AtomicBoolean rejected = new AtomicBoolean(false);
-        final AtomicReferenceArray<T> values = new AtomicReferenceArray(promiseCount);
-
-        return new Promise<>(deferral -> {
-
-            int promiseIndex = 0;
-            for (Promise<T> promise: promises) {
-
-                final int finalPromiseIndex = promiseIndex;
-                promise.then(value -> {
-
-                    // if one of the promises have been rejected just bail out here
-                    if (rejected.get() == true) {
-                        return null;
-                    }
-
-                    // otherwise add value to list of values
-                    int currentPromiseCount = promisesComplete.incrementAndGet();
-                    values.set(finalPromiseIndex, value);
-
-                    // if all promises are complete then resolve wrapping promise with an array of the values
-                    if (currentPromiseCount == promiseCount) {
-
-                        @SuppressWarnings("unchecked")
-                        ArrayList<T> finalValues = new ArrayList();
-                        for (int i=0; i < values.length(); i++) {
-                            finalValues.add(values.get(i));
-                        }
-                        deferral.resolve(finalValues);
-                    }
-                    return null;
-                })
-                .error(error -> {
-
-                    // if any promises are rejected, the wrapping promise is rejected immediately
-                    deferral.reject(error);
-                    rejected.set(true);
-                });
-
-                promiseIndex++;
-            }
-        });
-    }
-
-    public static <T, U> Promise<VariadicPromiseValue<T, U, Void>> when(Promise<T> promise1, Promise<U> promise2) {
-
-        final VariadicPromiseValue<T, U, Void> values = new VariadicPromiseValue<>(2);
-
-        ArrayList<Promise> promiseList = new ArrayList<>(2);
-        promiseList.add(promise1);
-        promiseList.add(promise2);
-
-        return when(promiseList, values);
-    }
-
-    public static <T, U, V> Promise<VariadicPromiseValue<T, U, V>> when(Promise<T> promise1, Promise<U> promise2,
-        Promise<V> promise3) {
-
-        final VariadicPromiseValue<T, U, V> values = new VariadicPromiseValue<>(3);
-
-        ArrayList<Promise> promiseList = new ArrayList<>(3);
-        promiseList.add(promise1);
-        promiseList.add(promise2);
-        promiseList.add(promise3);
-
-        return when(promiseList, values);
-    }
-
-    private static <T, U, V> Promise<VariadicPromiseValue<T, U, V>> when(ArrayList<Promise> promiseList,
-        VariadicPromiseValue values) {
-
-        final int promiseCount = promiseList.size();
-        final AtomicInteger promisesComplete = new AtomicInteger(0);
-        final AtomicBoolean rejected = new AtomicBoolean(false);
-
-        return new Promise<>(deferral -> {
-
-            int promiseIndex = 0;
-            for (Promise promise : promiseList) {
-
-                final int currentPromiseIndex = promiseIndex;
-                promise.then(value -> {
-
-                    // if already rejected do nothing
-                    if (rejected.get() == true) {
-                        return null;
-                    }
-
-                    // set value on variadicPromiseValue based on current index
-                    switch (currentPromiseIndex) {
-                        case 0:
-                            values.setFirst(value);
-                            break;
-                        case 1:
-                            values.setSecond(value);
-                            break;
-                        case 2:
-                            values.setThird(value);
-                    }
-
-                    // if all promises are complete, resolve new promise
-                    if (promisesComplete.incrementAndGet() == promiseCount) {
-                        deferral.resolve(values);
-                    }
-                    return null;
-                })
-                .error(error -> {
-
-                    if (rejected.get() == false) {
-
-                        rejected.set(true);
-                        deferral.reject(error);
-                    }
-                });
-
-                promiseIndex++;
-            }
-        });
-    }
-
-    //region Instance methods
-
-    /**
-     * Method that will execute the provided handler once this promise has been resolved
-     * @param thenAction A lambda function executed with one parameter representing the value that this promise
-     *                is resolved with, when this promise resolves. If this handler returns a new promise,
-     *                the following then in the chain will not be executed until this promise is resolved.
-     * @param <U> Type of the value that the returned promise will have.
-     * @return A new promise to be resolved when any promises returned within the handler are resolved
-     */
-    public <U> Promise<U> then(Then<T> thenAction) {
-
-        final Promise<T> currentPromise = this;
-        // then method will return a new promise which will be rejected or resolved when the current promise is complete
-        final Promise<U> continuation = new Promise<>(this.errorContext, continuationDeferral -> {
-
-            // once all thens have been executed on the current promise, try to call the onComplete on this current then
-            // and reject the current promise if necessary
-            // this done will not get called if a promise it is relying on has caught the exception and not bubbled it up
-            currentPromise.done((value, error) -> {
-
-                // if there was an error we want to reject the new promise
-                if (error != null) {
-                    continuationDeferral.reject(error);
-                }
-                // otherwise continue
-                else if (value != null) {
-                    try {
-                        // check if current then is returning a promise using reflection
-                        Object thenResult = thenAction.execute(value);
-
-                        // if it is returning a promise we need to add a then to it
-                        if (thenResult instanceof Promise) {
-
-                            Promise<U> innerThenPromise = (Promise<U>)thenResult;
-                            innerThenPromise.then(innerValue -> {
-
-                                // resolve newly created "thenPromise" after inner promise has resolved
-                                continuationDeferral.resolve(innerValue);
-                                return null;
-                            })
-                            .always(() -> {
-                                if (innerThenPromise.errorContext.error != null) {
-
-                                    this.errorContext.updateWithContext(innerThenPromise.errorContext);
-                                    continuationDeferral.reject(this.errorContext.error);
-                                }
-                            });
-                        }
-                        // if current thenAction is returning an object we can resolved right away
-                        else if (thenResult != null) {
-                            continuationDeferral.resolve(thenResult);
-                        }
-                        else {
-                            continuationDeferral.resolve(value);
-                        }
-                    } catch (Exception e) {
-
-                        continuationDeferral.reject(e);
-                    }
-                }
-                else {
-                    String message = "A null value and null error were provided to this promise";
-                    String stack = Arrays.toString(Thread.currentThread().getStackTrace());
-                    continuationDeferral.reject(new NullErrorAndValueException(message, stack));
-                }
-            });
-        });
-
-        return continuation;
-    }
-
-    /**
-     * Method that will execute the provided handler when this promise is rejected.
-     * @param catchHandler A lambda function executed with the exception that the promise was rejected with.
-     * @return The current promise.
-     */
-    public <U> Promise<U> error(CatchHandler catchHandler) {
-
-        // throw exception if no always handler is provided
-        if (catchHandler == null) {
-            throw new IllegalArgumentException("Handler lambda must be provided to error method.");
+        // if state is resolved, execute thenPromise
+        if (_state == PromiseState.RESOLVED) {
+            thenPromise.execute(_result);
         }
 
-        this.catchHandler = catchHandler;
-
-        // if promise has already been rejected and error has not already been consumed, just invoke handler
-        if (state == PromiseState.REJECTED) {
-
-            if (errorContext.consumed == false) {
-                try {
-                    invokeErrorHandler(errorContext.error);
-                    errorContext.consumed = true;
-                } catch (Exception error) {
-                    errorContext.consumed = false;
-                    errorContext.error = error;
-                }
-            }
-        }
-        return (Promise<U>)this;
-    }
-
-    public <U> Promise<U> error(RecoveryHandler recoveryHandler) {
-
-        // throw exception if no always handler is provided
-        if (recoveryHandler == null) {
-            throw new IllegalArgumentException("Handler lambda must be provided to error method.");
+        // if state is rejected, reject thenPromise
+        else if (_state == PromiseState.REJECTED) {
+            thenPromise.onReject(_rejection.share());
         }
 
-        this.recoveryHandler = recoveryHandler;
-
-        // if promise has already been rejected and error has not already been consumed, just invoke handler
-        if (state == PromiseState.REJECTED && errorContext.consumed == false) {
-
-            try {
-                // invoke recoveryHandler
-                U value = this.invokeRecoveryHandler(errorContext.error);
-                // if no value was returned from invoking the recovery handler a resolved promise should not be returned
-                if (value != null) {
-                    return Promise.resolve(value);
-                }
-
-            } catch (Exception error) {
-                errorContext.consumed = false;
-                errorContext.error = error;
-                return Promise.reject(error);
-            }
-        }
-        return (Promise<U>)this;
-    }
-
-    public void always(Always handler) {
-
-        // throw exception if no always handler is provided
-        if (handler == null) {
-            throw new IllegalArgumentException("Handler lambda must be provided to always method.");
-        }
-
-        if (state != PromiseState.PENDING) {
-            handler.onComplete();
-        }
+        // if state is pending, add to list of thenPromises
         else {
-            alwaysHandler = handler;
+            _thenPromises.add(thenPromise);
         }
+
+        // return newly created thenPromise
+        return thenPromise;
     }
 
-    private void done(Done<T> handler) {
+    public Promise<TResult> error(ErrorBlock block) {
 
-        // throw exception if no done handler is provided
-        if (handler == null) {
-            throw new IllegalArgumentException("Handler lambda must be provided to done method.");
+        // create new ErrorPromise
+        ErrorPromise<TResult> errorPromise = new ErrorPromise<>(block);
+
+        // if state is resolved, resolve errorPromise
+        if (_state == PromiseState.RESOLVED) {
+            errorPromise.onResolve(_result);
         }
 
-        // invoke or save doneHandler to be invoked later
-        if (state == PromiseState.FULFILLED) {
-            handler.onComplete(value, null);
+        // if state is rejected execute errorPromise
+        else if (_state == PromiseState.REJECTED) {
+            errorPromise.execute(_rejection.share());
         }
-        // if promise is rejected call done method
-        else if (state == PromiseState.REJECTED) {
-            handler.onComplete(null, errorContext.error);
-        }
+
+        // if state is pending, add to list of errorPromises
         else {
-
-            // ensure list is created
-            if (doneHandlers == null) {
-                doneHandlers = new ArrayList<>();
-            }
-
-            // add handler to chain
-            doneHandlers.add(handler);
+            _errorPromises.add(errorPromise);
         }
+
+        // return newly created errorPromise
+        return errorPromise;
     }
 
-    private void onResolved(T value) {
+    public Promise<TResult> always(AlwaysBlock block) {
 
-        state = PromiseState.FULFILLED;
-        this.value = value;
-        this.errorContext.error = null;
+        // create new AlwaysPromise
+        AlwaysPromise<TResult> alwaysPromise = new AlwaysPromise<>(block);
 
-        invokeCompleteMethods(value, null);
-    }
-
-    private void onRejected(Exception error) {
-
-        state = PromiseState.REJECTED;
-        if (errorContext != null) {
-            errorContext.error = error;
+        // if state is not pending, execute alwaysPromise immediately
+        if (_state != PromiseState.PENDING) {
+            alwaysPromise.execute();
         }
+
+        // if state is pending, add to list of alwaysPromises
         else {
-            errorContext = new ErrorContext(error, false);
+            _alwaysPromises.add(alwaysPromise);
         }
 
-        // check if there is a recoveryHandler and if error has been recovered
-        T newVal = null;
-        try {
-            newVal = invokeRecoveryHandler(errorContext.error);
-        } catch (Exception e) {
-            errorContext.error = e;
-        }
-
-        // if error was recovered call onResolved
-        if (newVal != null) {
-            onResolved(newVal);
-        }
-        // if error was not recovered and error hasn't been consumed invoke error handler
-        else if (errorContext.consumed == false) {
-            invokeErrorHandler(error);
-        }
-        // invoke complete methods
-        invokeCompleteMethods(null, error);
+        // return newly created errorPromise
+        return alwaysPromise;
     }
 
-    private <U> U invokeRecoveryHandler(Exception error) throws Exception {
+    // endregion
 
-        if (recoveryHandler != null && errorContext.consumed == false) {
 
-            try {
-                // invoke recoveryHandler
-                Recovery<U> recovery = new Recovery<>();
-                recoveryHandler.onError(errorContext.error, recovery);
+    // region lifecycle
 
-                // check if value was set on recovery
-                try {
-                    U newValue = recovery.getValue();
-                    errorContext.consumed = true;
-                    return newValue;
-                }
-                // if no value was set, we mark the error as consumed because this error block has already handled it
-                catch (ValueNotFoundException e) {
-                    errorContext.consumed = true;
-                    return null;
-                }
+    protected void onResolve(TResult result) {
 
-            }
-            // if recoveryHandler threw uncaught exception just re-throw it
-            catch (Exception e) {
-                throw e;
-            }
+        // set result
+        _result = result;
+
+        // update state
+        _state = PromiseState.RESOLVED;
+
+        // propagate down the chain
+        for (ThenPromise<TResult, ?> promise : _thenPromises) {
+            promise.execute(result);
         }
-        return null;
-    }
 
-    private void invokeErrorHandler(Exception error) {
+        // resolve all error promises
+        for (ErrorPromise<TResult> promise : _errorPromises) {
+            promise.onResolve(result);
+        }
 
-        if (catchHandler != null) {
-
-            try {
-
-                // return the result of the catchHandler
-                catchHandler.onError(error);
-                errorContext.consumed = true;
-
-            } catch (Exception e) {
-
-                errorContext.consumed = false;
-                errorContext.error = e;
-            }
+        // resolve all always promises
+        for (AlwaysPromise<TResult> promise : _alwaysPromises) {
+            promise.onResolve(result);
         }
     }
 
-    private void invokeCompleteMethods(T value, Exception error) {
+    protected void onReject(Rejection rejection) {
 
-        // Always handler needs to be executed before the done handler
-        // invoke always handler if provided
-        if (alwaysHandler != null) {
-            alwaysHandler.onComplete();
+        // set result
+        _rejection = rejection;
+
+        // update state
+        _state = PromiseState.REJECTED;
+
+        // propagate down the chain
+        for (ErrorPromise<TResult> promise : _errorPromises) {
+            promise.execute(rejection.share());
         }
 
-        // invoke final handler
-        if (doneHandlers != null) {
-            for (Done doneHandler : doneHandlers) {
-                doneHandler.onComplete(value, error);
-            }
+        // reject all then promises
+        for (ThenPromise<TResult, ?> promise : _thenPromises) {
+            promise.onReject(rejection.share());
+        }
+
+        // reject all always promises
+        for (AlwaysPromise<TResult> promise : _alwaysPromises) {
+            promise.onReject(rejection.share());
         }
     }
 
-    //endregion
+    // endregion
 }

@@ -1,14 +1,10 @@
-package com.nascentdigital.standby;
+package com.nascentdigital.standby_legacy;
 
-
-import android.util.Log;
 
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.locks.Lock;
 
 import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertEquals;

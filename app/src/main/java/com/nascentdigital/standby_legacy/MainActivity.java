@@ -1,4 +1,4 @@
-package com.nascentdigital.standby;
+package com.nascentdigital.standby_legacy;
 
 import android.app.Activity;
 import android.os.Bundle;

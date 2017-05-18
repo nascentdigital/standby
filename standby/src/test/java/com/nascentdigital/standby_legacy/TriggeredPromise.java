@@ -1,4 +1,4 @@
-package com.nascentdigital.standby;
+package com.nascentdigital.standby_legacy;
 
 import java.util.concurrent.CountDownLatch;
 

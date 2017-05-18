@@ -1,4 +1,4 @@
-package com.nascentdigital.standby;
+package com.nascentdigital.standby_legacy;
 
 /**
  * Created by sdedios on 2017-05-09.
