@@ -78,6 +78,18 @@ public class Promise<TResult> {
         return promise;
     }
 
+    public static <U> Promise<ArrayList<U>> when(Promise<U>[] promises) {
+
+        // create new WhenPromise with list of promises
+        WhenPromise<ArrayList<U>, U> whenPromise = new WhenPromise<>(promises);
+
+        // execute promise list
+        whenPromise.executePromiseList();
+
+        // return new when promise
+        return whenPromise;
+    }
+
     // endregion
 
 
