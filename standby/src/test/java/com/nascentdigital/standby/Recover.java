@@ -113,8 +113,7 @@ public class Recover {
                 fail("Second error block should not be called if error is consumed");
             });
 
-        AsyncPromise promise = new AsyncPromise(triggerPromise);
-        promise.executeTriggerAndJoin();
+        AsyncPromise.executeTriggerAndJoin(triggerPromise);
 
         assertTrue(called.value);
     }

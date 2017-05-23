@@ -6,18 +6,12 @@ package com.nascentdigital.standby;
 
 public class AsyncPromise {
 
-    private TriggeredPromise _triggerPromise;
-
-    AsyncPromise(TriggeredPromise triggerPromise) {
-        _triggerPromise = triggerPromise;
-    }
-
-    void executeTriggerAndJoin() throws InterruptedException {
+    static <T> void executeTriggerAndJoin(TriggeredPromise<T> triggerPromise) throws InterruptedException {
 
         // trigger
-        _triggerPromise.trigger();
+        triggerPromise.trigger();
 
         // wait
-        _triggerPromise.join(10000);
+        triggerPromise.join(10000);
     }
 }

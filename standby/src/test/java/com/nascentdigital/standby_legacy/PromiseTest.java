@@ -79,80 +79,6 @@ public class PromiseTest {
     }
 
     @Test
-    public void when_ShouldExecuteMultiplePromises() {
-
-        List mockList = mock(List.class);
-
-        String firstVal = "First value";
-        String secondVal = "Second value";
-        Promise<String>[] promises = new Promise[]{
-            Promise.resolve(firstVal),
-            Promise.resolve(secondVal)
-        };
-        Promise.when(promises)
-            .then(values -> {
-
-                assertEquals(firstVal, values.get(0));
-                assertEquals(secondVal, values.get(1));
-                mockList.add("This should happen once");
-                return null;
-            });
-
-        verify(mockList, timeout(100).times(1)).add("This should happen once");
-    }
-
-    @Test
-    public void when_ShouldExecuteMultiplePromisesAsync() {
-
-        List mockList = mock(List.class);
-
-        String firstVal = "First value";
-        String secondVal = "Second value";
-        Promise<String>[] promises = new Promise[]{
-            createAsyncPromise(firstVal),
-            createAsyncPromise(secondVal)
-        };
-        Promise.when(promises)
-            .then(values -> {
-
-                assertEquals(firstVal, values.get(0));
-                assertEquals(secondVal, values.get(1));
-                mockList.add("This should happen once");
-                return null;
-            });
-
-        verify(mockList, timeout(8000).times(1)).add("This should happen once");
-    }
-
-    @Test
-    public void when_ShouldFailWhenExceptionIsThrown() {
-
-        List mockList = mock(List.class);
-        List exceptionMockList = mock(List.class);
-
-        String firstVal = "First value";
-        Exception exception = new RuntimeException();
-        Promise<String>[] promises = new Promise[]{
-            createAsyncPromise(firstVal),
-            Promise.reject(exception)
-        };
-        Promise.when(promises)
-            .then(values -> {
-
-                mockList.add("This should not happen");
-                return null;
-            })
-            .error(error -> {
-
-                assertEquals(exception, error);
-                exceptionMockList.add("This should happen");
-            });
-
-        verify(exceptionMockList, timeout(5000).times(1)).add("This should happen");
-        verify(mockList, timeout(5000).times(0)).add("This should not happen");
-    }
-
-    @Test
     public void twoParameterWhen_ShouldResolveWithStrongTypedValues() {
 
         String firstVal = "First value";
@@ -179,35 +105,6 @@ public class PromiseTest {
             .error(error -> {
                 assertNull(error);
             });
-
-        verify(mockList, timeout(5000).times(1)).add("This should happen");
-    }
-
-    @Test
-    public void whenShouldBeExecutedWithArrayList() {
-
-        Integer[] initialValues = { 0, 1, 2, 3 };
-        List mockList = mock(List.class);
-
-        ArrayList<Promise<Integer>> promises = new ArrayList<>();
-        for (Integer num : initialValues) {
-            promises.add(createPromise(num));
-        }
-
-        Promise.when(promises)
-        .then(values -> {
-
-            assertEquals(initialValues.length, values.size());
-            for (int i=0; i<initialValues.length; i++) {
-                assertEquals(initialValues[i], values.get(i));
-            }
-
-            mockList.add("This should happen");
-            return null;
-        })
-        .error(error -> {
-            assertNull(error);
-        });
 
         verify(mockList, timeout(5000).times(1)).add("This should happen");
     }

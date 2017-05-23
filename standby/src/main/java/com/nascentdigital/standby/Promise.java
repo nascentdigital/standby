@@ -90,6 +90,15 @@ public class Promise<TResult> {
         return whenPromise;
     }
 
+    public static <U> Promise<ArrayList<U>> when(ArrayList<Promise<U>> promises) {
+
+        // create empty array
+        Promise<U>[] promiseArray = new Promise[promises.size()];
+
+        // called base method with new array from arraylist
+        return Promise.when(promises.toArray(promiseArray));
+    }
+
     // endregion
 
 

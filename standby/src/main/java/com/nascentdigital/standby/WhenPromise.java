@@ -2,6 +2,7 @@ package com.nascentdigital.standby;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
  * Created by tomwark on 2017-05-18.
@@ -12,7 +13,7 @@ class WhenPromise<TResult, TElement> extends Promise<TResult> {
     // region instance variables
 
     private final Promise<TElement>[] _promiseList;
-    private List<TElement> _values;
+    private AtomicReferenceArray<TElement> _values;
     private int _promisesComplete = 0;
     private boolean _hasRejections = false;
 
@@ -27,7 +28,7 @@ class WhenPromise<TResult, TElement> extends Promise<TResult> {
         super();
 
         // initialize instance variables
-        _values = new ArrayList<>(promiseList.length);
+        _values = new AtomicReferenceArray<>(promiseList.length);
         _promiseList = promiseList;
     }
 
@@ -72,13 +73,13 @@ class WhenPromise<TResult, TElement> extends Promise<TResult> {
                 else if (promise._state == PromiseState.RESOLVED) {
 
                     // set value at current index in array
-                    _values.add(index, promise._result);
+                    _values.set(index, promise._result);
 
                     // if all promises are complete call resolve promise
                     if (_promisesComplete == _promiseList.length) {
 
                         // cast resulting array to TResult
-                        TResult finalValues = (TResult)_values;
+                        TResult finalValues = (TResult)arrayFrom(_values);
                         onResolve(finalValues);
                     }
                 }
@@ -92,6 +93,28 @@ class WhenPromise<TResult, TElement> extends Promise<TResult> {
             // increment index counter
             i++;
         }
+    }
+
+    // endregion
+
+
+    // region private methods
+
+    private ArrayList<TElement> arrayFrom(AtomicReferenceArray<TElement> atomicArray) {
+
+        // cache atomic array length in variable
+        int len = atomicArray.length();
+
+        // create new arraylist
+        ArrayList<TElement> newList = new ArrayList<>(atomicArray.length());
+
+        // iterate over atomic array and copy to arraylist
+        for (int i = 0; i < len; i++) {
+            newList.add(atomicArray.get(i));
+        }
+
+        // return new arraylist
+        return newList;
     }
 
     // endregion
