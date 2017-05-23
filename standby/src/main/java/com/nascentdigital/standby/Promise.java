@@ -131,7 +131,7 @@ public class Promise<TResult> {
         return errorPromise;
     }
 
-    public Promise<TResult> recover(RecoveryBlock block) {
+    public Promise<TResult> error(RecoveryBlock block) {
 
         // create new UnrecoverableErrorPromise
         RecoverableErrorPromise<TResult> errorPromise = new RecoverableErrorPromise<>(block);

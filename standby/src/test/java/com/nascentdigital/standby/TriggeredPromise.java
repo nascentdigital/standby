@@ -1,9 +1,9 @@
-package com.nascentdigital.standby_legacy;
+package com.nascentdigital.standby;
 
 import java.util.concurrent.CountDownLatch;
 
 /**
- * A helper class for testing {@link Promise} instances.  This class provides a promise that won't
+ * A helper class for testing {@link com.nascentdigital.standby_legacy.Promise} instances.  This class provides a promise that won't
  * execute until a trigger is set.
  */
 public class TriggeredPromise<T> {
