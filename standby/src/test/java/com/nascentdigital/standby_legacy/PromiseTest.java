@@ -109,55 +109,6 @@ public class PromiseTest {
         verify(mockList, timeout(5000).times(1)).add("This should happen");
     }
 
-    @Test
-    public void all_ShouldBeAbleToAcceptArraylistOfVariableTypedPromises() {
-
-        List mockList = mock(List.class);
-
-        ArrayList<Promise<?>> list = new ArrayList<>();
-        Promise<String> stringPromise = createAsyncPromise("My String");
-        list.add(0, Promise.resolve(String.valueOf("Test")));
-        list.add(1, Promise.resolve(Integer.valueOf(10)));
-        list.add(2, stringPromise);
-
-        Promise.all(list)
-            .then(valueList -> {
-
-                assertEquals(valueList.get(0), String.valueOf("Test"));
-                assertEquals(valueList.get(1), Integer.valueOf(10));
-                assertEquals(valueList.get(2), String.valueOf("My String"));
-                mockList.add("This should happen");
-                return null;
-            });
-        verify(mockList, timeout(3000).times(1)).add("This should happen");
-    }
-
-    @Test
-    public void all_ShouldBeAbleToAcceptArrayOfVariableTypedPromises() {
-
-        List mockList = mock(List.class);
-
-        Promise<String> stringPromise = Promise.resolve(String.valueOf("Test"));
-        Promise<String> stringPromise2 = createAsyncPromise("My String");
-        Promise<Integer> integerPromise = Promise.resolve(Integer.valueOf(10));
-
-        Promise[] list = {
-            stringPromise,
-            stringPromise2,
-            integerPromise
-        };
-
-        Promise.all(list)
-        .then(valueList -> {
-
-            assertEquals(valueList.get(0), String.valueOf("Test"));
-            assertEquals(valueList.get(1), String.valueOf("My String"));
-            assertEquals(valueList.get(2), Integer.valueOf(10));
-            mockList.add("This should happen");
-            return null;
-        });
-        verify(mockList, timeout(3000).times(1)).add("This should happen");
-    }
 
     @Test
     public void shouldBeAbleToReturnWhenInsideThenBlock() {
@@ -183,45 +134,6 @@ public class PromiseTest {
         });
         verify(mockList, timeout(5000).times(1)).add("This should happen");
     }
-    @Test
-    public void all_shouldStillCallThenBlockWhenPromisesAreRecovered() {
-
-        List mockList = mock(List.class);
-
-        Promise p1 = Promise.reject(new Exception())
-            .error((error, recovery) -> {
-                recovery.recover("Test1");
-            });
-        Promise p2 = createAsyncPromise("Test2");
-        Promise p3 = Promise.reject(new Exception())
-            .then(value -> {
-                mockList.add("This should not happen");
-                return null;
-            })
-            .error((error, recovery) -> {
-                recovery.recover("Test3");
-            });
-        Promise p4 = Promise.resolve("Test4");
-        Promise p5 = Promise.resolve("Test5");
-
-        Promise.all(new Promise[]{
-            p1,
-            p2,
-            p3,
-            p4,
-            p5
-        })
-        .then(values -> {
-            mockList.add("This should be called");
-            return null;
-        })
-        .error(error -> {
-            mockList.add("This should not be called");
-        });
-
-        verify(mockList, timeout(5000).times(1)).add("This should be called");
-        verify(mockList, timeout(5000).times(0)).add("This should not be called");
-    }
 
     private <T> Promise<T> createAsyncPromise(T testValue) {
 
@@ -239,18 +151,5 @@ public class PromiseTest {
             }).start();
 
         });
-    }
-
-    private Promise<Integer> createPromise(Integer num) {
-
-        String someString = "HEYY";
-        return createAsyncPromise(someString)
-            .then(string -> {
-                Integer someInt = Integer.valueOf(num);
-                return someInt;
-            })
-            .error(error -> {
-                throw error;
-            });
     }
 }

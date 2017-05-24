@@ -7,12 +7,12 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  * Created by tomwark on 2017-05-18.
  */
 
-class WhenPromise<TResult, TElement> extends Promise<TResult> {
+class AllPromise<TResult> extends Promise<TResult> {
 
     // region instance variables
 
-    private final Promise<TElement>[] _promiseList;
-    private AtomicReferenceArray<TElement> _values;
+    private final Promise[] _promiseList;
+    private AtomicReferenceArray _values;
     private int _promisesComplete = 0;
     private boolean _hasRejections = false;
 
@@ -21,7 +21,7 @@ class WhenPromise<TResult, TElement> extends Promise<TResult> {
 
     // region constructors
 
-    WhenPromise(Promise[] promiseList) {
+    AllPromise(Promise[] promiseList) {
 
         // call base constructor
         super();
@@ -43,7 +43,7 @@ class WhenPromise<TResult, TElement> extends Promise<TResult> {
         int i = 0;
 
         // iterate over promises in list
-        for (Promise<TElement> promise : _promiseList) {
+        for (Promise<?> promise : _promiseList) {
 
             // break out of loop if any promises have failed
             if (_hasRejections) {
@@ -99,13 +99,13 @@ class WhenPromise<TResult, TElement> extends Promise<TResult> {
 
     // region private methods
 
-    private ArrayList<TElement> arrayFrom(AtomicReferenceArray<TElement> atomicArray) {
+    private ArrayList arrayFrom(AtomicReferenceArray atomicArray) {
 
         // cache atomic array length in variable
         int len = atomicArray.length();
 
         // create new arraylist
-        ArrayList<TElement> newList = new ArrayList<>(atomicArray.length());
+        ArrayList newList = new ArrayList<>(atomicArray.length());
 
         // iterate over atomic array and copy to arraylist
         for (int i = 0; i < len; i++) {

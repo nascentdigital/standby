@@ -99,6 +99,27 @@ public class Promise<TResult> {
         return Promise.when(promises.toArray(promiseArray));
     }
 
+    public static Promise<ArrayList<?>> all(ArrayList<Promise<?>> promises) {
+
+        // create empty array
+        Promise[] promiseArray = new Promise[promises.size()];
+
+        // called base method with new array from arraylist
+        return Promise.all(promises.toArray(promiseArray));
+    }
+
+    public static Promise<ArrayList<?>> all(Promise<?>[] promises) {
+
+        // create new AllPromise with list of promises
+        AllPromise<ArrayList<?>> allPromise = new AllPromise<>(promises);
+
+        // execute promise list
+        allPromise.executePromiseList();
+
+        // return new when promise
+        return allPromise;
+    }
+
     // endregion
 
 
