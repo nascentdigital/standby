@@ -12,6 +12,6 @@ public class AsyncPromise {
         triggerPromise.trigger();
 
         // wait
-        triggerPromise.join(10000);
+        triggerPromise.join(100000);
     }
 }

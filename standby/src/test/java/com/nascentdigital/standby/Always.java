@@ -87,4 +87,22 @@ public class Always {
         assertTrue(errorCalled.value);
         assertTrue(alwaysCalled.value);
     }
+
+    @Test
+    public void always_ShouldBeCalledOnAsyncPromise() throws InterruptedException {
+
+        Box<Boolean> called = new Box<>(false);
+
+        TriggeredPromise<Boolean> trigger = new TriggeredPromise<>(() -> true);
+
+        trigger.promise
+            .always(() -> {
+
+                called.value = true;
+            });
+
+        AsyncPromise.executeTriggerAndJoin(trigger);
+
+        assertTrue(called.value);
+    }
 }

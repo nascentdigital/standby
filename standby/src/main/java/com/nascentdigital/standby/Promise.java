@@ -218,8 +218,9 @@ public class Promise<TResult> {
             promise.onResolve(result);
         }
 
-        // resolve all always promises
+        // execute and resolve all always promises
         for (AlwaysPromise<TResult> promise : _alwaysPromises) {
+            promise.execute();
             promise.onResolve(result);
         }
     }
@@ -242,8 +243,9 @@ public class Promise<TResult> {
             promise.onReject(rejection.share());
         }
 
-        // reject all always promises
+        // execute reject all always promises
         for (AlwaysPromise<TResult> promise : _alwaysPromises) {
+            promise.execute();
             promise.onReject(rejection.share());
         }
     }

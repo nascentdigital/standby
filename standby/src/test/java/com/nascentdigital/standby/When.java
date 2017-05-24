@@ -106,9 +106,6 @@ public class When {
             Promise.resolve(secondVal)
         };
 
-        // FIXME: this isn't actually testing async
-        AsyncPromise.executeTriggerAndJoin(trigger);
-
         Promise.when(promises)
             .then(values -> {
 
@@ -118,6 +115,7 @@ public class When {
                 return null;
             });
 
+        AsyncPromise.executeTriggerAndJoin(trigger);
 
         assertTrue(called.value);
     }
