@@ -80,14 +80,14 @@ public class Promise<TResult> {
 
     public static <U> Promise<ArrayList<U>> when(Promise<U>[] promises) {
 
-        // create new WhenPromise with list of promises
-        WhenPromise<ArrayList<U>, U> whenPromise = new WhenPromise<>(promises);
+        // create new CollectionWhenPromise with list of promises
+        CollectionWhenPromise<ArrayList<U>, U> collectionWhenPromise = new CollectionWhenPromise<>(promises);
 
         // execute promise list
-        whenPromise.executePromiseList();
+        collectionWhenPromise.executePromiseList();
 
         // return new when promise
-        return whenPromise;
+        return collectionWhenPromise;
     }
 
     public static <U> Promise<ArrayList<U>> when(ArrayList<Promise<U>> promises) {
@@ -97,6 +97,26 @@ public class Promise<TResult> {
 
         // called base method with new array from arraylist
         return Promise.when(promises.toArray(promiseArray));
+    }
+
+    public static <T1, T2, T3> Promise<PromiseValueContainer<T1, T2, T3>> when(Promise<T1> promise1,
+        Promise<T2> promise2, Promise<T3> promise3) {
+
+        // create new when promise with 3 promises provided
+        WhenPromise whenPromise = new WhenPromise(promise1, promise2, promise3);
+
+        // execute 3 promises
+        whenPromise.executePromises();
+
+        // return new when promise
+        return whenPromise;
+    }
+
+    public static <T1, T2> Promise<PromiseValueContainer<T1, T2, Void>> when(Promise<T1> promise1,
+        Promise<T2> promise2) {
+
+        // call base implementation
+        return Promise.when(promise1, promise2, null);
     }
 
     public static Promise<ArrayList<?>> all(ArrayList<Promise<?>> promises) {

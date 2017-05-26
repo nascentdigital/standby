@@ -7,13 +7,16 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  * Created by tomwark on 2017-05-18.
  */
 
-class WhenPromise<TResult, TElement> extends Promise<TResult> {
+class WhenPromise<T1, T2, T3> extends Promise<PromiseValueContainer<T1, T2, T3>> {
 
     // region instance variables
 
-    private final Promise<TElement>[] _promiseList;
-    private AtomicReferenceArray<TElement> _values;
+    private PromiseValueContainer<T1, T2, T3> _valueContainer;
+    private int _promiseCount = 0;
     private int _promisesComplete = 0;
+    private Promise<T1> _firstPromise;
+    private Promise<T2> _secondPromise;
+    private Promise<T3> _thirdPromise;
     private boolean _hasRejections = false;
 
     // endregion
@@ -21,14 +24,28 @@ class WhenPromise<TResult, TElement> extends Promise<TResult> {
 
     // region constructors
 
-    WhenPromise(Promise[] promiseList) {
+    WhenPromise(Promise<T1> p1, Promise<T2> p2, Promise<T3> p3) {
 
         // call base constructor
         super();
 
+        // throw if either of the first 2 args are null
+        if (p1 == null || p2 == null) {
+            throw new IllegalArgumentException("Must provide at least two promises to constructor");
+        }
+
         // initialize instance variables
-        _values = new AtomicReferenceArray<>(promiseList.length);
-        _promiseList = promiseList;
+        _firstPromise = p1;
+        _secondPromise = p2;
+        _thirdPromise = p3;
+        _promiseCount = _thirdPromise != null ? 3 : 2;
+        _valueContainer = new PromiseValueContainer<T1, T2, T3>();
+    }
+
+    WhenPromise(Promise<T1> p1, Promise<T2> p2) {
+
+        // call base constructor
+        this(p1, p2, null);
     }
 
     // endregion
@@ -36,61 +53,13 @@ class WhenPromise<TResult, TElement> extends Promise<TResult> {
 
     // region lifecycle
 
-    // TODO: make this thread safe
-    void executePromiseList() {
+    void executePromises() {
 
-        // create counter to hold current index
-        int i = 0;
+        _firstPromise.always(() -> onPromiseComplete(_firstPromise, 1));
+        _secondPromise.always(() -> onPromiseComplete(_secondPromise, 2));
 
-        // iterate over promises in list
-        for (Promise<TElement> promise : _promiseList) {
-
-            // break out of loop if any promises have failed
-            if (_hasRejections) {
-                break;
-            }
-
-            // capture current index in array
-            final int index = i;
-
-            // add always block to handle resolution or rejection of promise
-            promise.always(() -> {
-
-                // increment promises complete count
-                _promisesComplete++;
-
-                // exit if any rejections have already occurred (fail fast)
-                if (_hasRejections) {
-                    return;
-                }
-
-                // reject if rejected and exit loop (fail fast)
-                if (promise._state == PromiseState.REJECTED) {
-                    onReject(promise._rejection.share());
-                }
-                // add value to array if resolved
-                else if (promise._state == PromiseState.RESOLVED) {
-
-                    // set value at current index in array
-                    _values.set(index, promise._result);
-
-                    // if all promises are complete call resolve promise
-                    if (_promisesComplete == _promiseList.length) {
-
-                        // cast resulting array to TResult
-                        TResult finalValues = (TResult)arrayFrom(_values);
-                        onResolve(finalValues);
-                    }
-                }
-                // if always block is called and promise is neither resolved nor rejected
-                // reject with invalid state exception
-                else {
-                    onReject(new Rejection(new InvalidPromiseStateException(promise)));
-                }
-            });
-
-            // increment index counter
-            i++;
+        if (_thirdPromise != null) {
+            _thirdPromise.always(() -> onPromiseComplete(_thirdPromise, 3));
         }
     }
 
@@ -99,21 +68,43 @@ class WhenPromise<TResult, TElement> extends Promise<TResult> {
 
     // region private methods
 
-    private ArrayList<TElement> arrayFrom(AtomicReferenceArray<TElement> atomicArray) {
+    // TODO: make this thread safe
+    private void onPromiseComplete(Promise promise, int index) {
 
-        // cache atomic array length in variable
-        int len = atomicArray.length();
+        // increment promises complete
+        _promisesComplete++;
 
-        // create new arraylist
-        ArrayList<TElement> newList = new ArrayList<>(atomicArray.length());
-
-        // iterate over atomic array and copy to arraylist
-        for (int i = 0; i < len; i++) {
-            newList.add(atomicArray.get(i));
+        // exit if a rejection has already occurred
+        if (_hasRejections) {
+            return;
         }
 
-        // return new arraylist
-        return newList;
+        // check state of promise
+        if (promise._state == PromiseState.REJECTED) {
+
+            // if rejected mark has rejections to true and reject
+            _hasRejections = true;
+            onReject(promise._rejection.share());
+        }
+        // add value to array if resolved
+        else if (promise._state == PromiseState.RESOLVED) {
+
+            // set value at current index in promise list
+            _valueContainer.setValueForIndex(index, promise._result);
+
+            // if all promises are complete call resolve promise
+            if (_promisesComplete == _promiseCount) {
+
+                // resolve using value container
+                onResolve(_valueContainer);
+            }
+        }
+        // if always block is called and promise is neither resolved nor rejected
+        // reject with invalid state exception
+        else {
+            onReject(new Rejection(new InvalidPromiseStateException(promise)));
+        }
+
     }
 
     // endregion
