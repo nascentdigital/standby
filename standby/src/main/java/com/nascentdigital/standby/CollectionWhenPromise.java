@@ -5,8 +5,10 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
  * Created by tomwark on 2017-05-18.
+ *
+ * @param <TResult>  the type parameter
+ * @param <TElement> the type parameter
  */
-
 class CollectionWhenPromise<TResult, TElement> extends Promise<TResult> {
 
     // region instance variables
@@ -21,6 +23,11 @@ class CollectionWhenPromise<TResult, TElement> extends Promise<TResult> {
 
     // region constructors
 
+    /**
+     * Instantiates a new Collection when promise.
+     *
+     * @param promiseList the promise list
+     */
     CollectionWhenPromise(Promise[] promiseList) {
 
         // call base constructor
@@ -36,6 +43,9 @@ class CollectionWhenPromise<TResult, TElement> extends Promise<TResult> {
 
     // region lifecycle
 
+    /**
+     * Execute promise list.
+     */
     // TODO: make this thread safe
     void executePromiseList() {
 

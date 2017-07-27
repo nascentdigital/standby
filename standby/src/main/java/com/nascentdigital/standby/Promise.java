@@ -5,18 +5,37 @@ import java.util.List;
 
 /**
  * Created by tomwark on 2017-05-18.
+ *
+ * @param <TResult> the type parameter
  */
-
 public class Promise<TResult> {
 
     // region instance variables
 
+    /**
+     * The Then promises.
+     */
     protected final List<ThenPromise<TResult, ?>> _thenPromises;
+    /**
+     * The Error promises.
+     */
     protected final List<ErrorPromise<TResult>> _errorPromises;
+    /**
+     * The Always promises.
+     */
     protected final List<AlwaysPromise<TResult>> _alwaysPromises;
 
+    /**
+     * The State.
+     */
     protected PromiseState _state;
+    /**
+     * The Result.
+     */
     protected TResult _result;
+    /**
+     * The Rejection.
+     */
     protected Rejection _rejection;
 
     // endregion
@@ -24,6 +43,9 @@ public class Promise<TResult> {
 
     // region constructors
 
+    /**
+     * Instantiates a new Promise.
+     */
     protected Promise() {
 
         // initialize instance variables
@@ -33,6 +55,11 @@ public class Promise<TResult> {
         _state = PromiseState.PENDING;
     }
 
+    /**
+     * Instantiates a new Promise.
+     *
+     * @param deferralBlock A block that is executed immediately with a deferral object that is used to either                      resolve or reject the newly instantiated promise.
+     */
     public Promise(DeferralBlock deferralBlock) {
 
         // call core constructor
@@ -49,6 +76,11 @@ public class Promise<TResult> {
 
     // region properties
 
+    /**
+     * Gets state.
+     *
+     * @return The current {@link PromiseState} of the promise.
+     */
     public PromiseState getState() {
         return _state;
     }
@@ -58,6 +90,14 @@ public class Promise<TResult> {
 
     // region creation
 
+
+    /**
+     * Creates a new resolved {@link Promise}.
+     *
+     * @param <U>   The type of the value that the promise represents.
+     * @param value The value to resolve with.
+     * @return A resolved promise.
+     */
     public static <U> Promise<U> resolve(U value) {
 
        // create new resolved promise
@@ -68,6 +108,13 @@ public class Promise<TResult> {
         return promise;
     }
 
+    /**
+     * Creates a rejected {@link Promise}.
+     *
+     * @param <U>   The type of the value that the promise represents.
+     * @param error The error that the promise is rejected with.
+     * @return A rejected promise.
+     */
     public static <U> Promise<U> reject(Exception error) {
 
         // create and return new Promise that is rejected immediately
@@ -78,6 +125,14 @@ public class Promise<TResult> {
         return promise;
     }
 
+    /**
+     * Creates a new {@link Promise} that is resolved when all promises in the provided array are resolved.
+     * Promise will be rejected as soon as one of the promises is rejected.
+     *
+     * @param <U>      The type of the value that the promise represents.
+     * @param promises The list of promises to resolve on.
+     * @return A new promise.
+     */
     public static <U> Promise<ArrayList<U>> when(Promise<U>[] promises) {
 
         // create new CollectionWhenPromise with list of promises
@@ -90,6 +145,14 @@ public class Promise<TResult> {
         return collectionWhenPromise;
     }
 
+    /**
+     * Creates a new {@link Promise} that is resolved when all promises in the provided array are resolved.
+     * Promise will be rejected as soon as one of the promises is rejected.
+     *
+     * @param <U>      The type of the value that the promise represents.
+     * @param promises The arraylist of promises to resolve on.
+     * @return A new promise.
+     */
     public static <U> Promise<ArrayList<U>> when(ArrayList<Promise<U>> promises) {
 
         // create empty array
@@ -99,6 +162,18 @@ public class Promise<TResult> {
         return Promise.when(promises.toArray(promiseArray));
     }
 
+    /**
+     * Creates a new {@link Promise} that is resolved when all promises provided are resolved.
+     * Promise will be rejected as soon as one of the promises is rejected.
+     *
+     * @param <T1>     The first type parameter.
+     * @param <T2>     The second type parameter.
+     * @param <T3>     The third parameter.
+     * @param promise1 The first promise.
+     * @param promise2 The second promise.
+     * @param promise3 The third promise.
+     * @return A new promise.
+     */
     public static <T1, T2, T3> Promise<PromiseValueContainer<T1, T2, T3>> when(Promise<T1> promise1,
         Promise<T2> promise2, Promise<T3> promise3) {
 
@@ -112,6 +187,16 @@ public class Promise<TResult> {
         return whenPromise;
     }
 
+    /**
+     * Creates a new {@link Promise} that is resolved when all promises provided are resolved.
+     * Promise will be rejected as soon as one of the promises is rejected.
+     *
+     * @param <T1>     The first type parameter.
+     * @param <T2>     The second type parameter.
+     * @param promise1 The first promise.
+     * @param promise2 The second promise.
+     * @return A new promise.
+     */
     public static <T1, T2> Promise<PromiseValueContainer<T1, T2, Void>> when(Promise<T1> promise1,
         Promise<T2> promise2) {
 
@@ -119,6 +204,14 @@ public class Promise<TResult> {
         return Promise.when(promise1, promise2, null);
     }
 
+    /**
+     * Creates a new {@link Promise} that is resolved when all promises in the provided arraylist are resolved.
+     * This method is meant to be used when the types of the promises are varied.
+     * Promise will be rejected as soon as one of the promises is rejected.
+     *
+     * @param promises An arraylist of promises to be executed.
+     * @return A new promise.
+     */
     public static Promise<ArrayList<?>> all(ArrayList<Promise<?>> promises) {
 
         // create empty array
@@ -128,6 +221,14 @@ public class Promise<TResult> {
         return Promise.all(promises.toArray(promiseArray));
     }
 
+    /**
+     * Creates a new {@link Promise} that is resolved when all promises in the provided array are resolved.
+     * This method is meant to be used when the types of the promises are varied.
+     * Promise will be rejected as soon as one of the promises is rejected.
+     *
+     * @param promises An array of promises to be executed.
+     * @return A new promise.
+     */
     public static Promise<ArrayList<?>> all(Promise<?>[] promises) {
 
         // create new AllPromise with list of promises
@@ -145,6 +246,16 @@ public class Promise<TResult> {
 
     // region chaining
 
+    /**
+     * Executes provided block when promise is resolved with the value that the promise represents.
+     * Block will not be executed if promise is rejected.
+     * If promise is already resolved, the block will be executed immediately,
+     * otherwise it will be executed asynchronously when the promise is resolved.
+     *
+     * @param <T>   The type of the value the inner promise holds.
+     * @param block A block of code to be executed when promise is resolved.
+     * @return A new promise that represents the value returned by the block. If that value is a promise, this new promise will depend on the inner promise.
+     */
     public <T> Promise<T> then(ThenBlock<TResult> block) {
 
         // create new ThenPromise
@@ -169,6 +280,15 @@ public class Promise<TResult> {
         return thenPromise;
     }
 
+    /**
+     * Executes provided block when promise is rejected with the exception that the promise was rejected with.
+     * Block will not be executed if the promise is resolved.
+     * If promise is already rejected, the block will be executed immediately,
+     * otherwise it will be executed asynchronously when the promise is rejected.
+     *
+     * @param block A block of code to be executed with the promise is rejected.              If this block throws an error the returned promise is rejected.
+     * @return A new promise that represents the value and state of the current promise.
+     */
     public Promise<TResult> error(ErrorBlock block) {
 
         // create new UnrecoverableErrorPromise
@@ -193,6 +313,17 @@ public class Promise<TResult> {
         return errorPromise;
     }
 
+    /**
+     * Executes provided block when promise is rejected with the exception that the promise was rejected with,
+     * as well as a recovery object. Calling the recover method on the recovery object will "recover" the current promise
+     * and return a new promise resolved with the value passed to the recover method.
+     * Block will not be executed if the promise is resolved.
+     * If promise is already rejected, the block will be executed immediately,
+     * otherwise it will be executed asynchronously when the promise is rejected.
+     *
+     * @param block A block of code to be executed with the promise is rejected.              If this block throws an error the returned promise is rejected.              If this block calls the recover method on the provided recovery object the returned promise              will be resolved with the value provided.
+     * @return A new promise that is rejected or resolved based on the action taken in the recovery block.
+     */
     public Promise<TResult> error(RecoveryBlock block) {
 
         // create new UnrecoverableErrorPromise
@@ -217,6 +348,13 @@ public class Promise<TResult> {
         return errorPromise;
     }
 
+    /**
+     * Executes provided block when a promise is either resolved or rejected. This block will be invoked after any
+     * error or then blocks chained on the promise.
+     *
+     * @param block A block of code to be executed with the promise is resolved or rejected.
+     * @return A new promise that represents the value and state of the current promise.
+     */
     public Promise<TResult> always(AlwaysBlock block) {
 
         // create new AlwaysPromise
@@ -241,6 +379,11 @@ public class Promise<TResult> {
 
     // region lifecycle
 
+    /**
+     * On resolve.
+     *
+     * @param result the result
+     */
     protected void onResolve(TResult result) {
 
         // set result
@@ -266,6 +409,11 @@ public class Promise<TResult> {
         }
     }
 
+    /**
+     * On reject.
+     *
+     * @param rejection the rejection
+     */
     protected void onReject(Rejection rejection) {
 
         // set result

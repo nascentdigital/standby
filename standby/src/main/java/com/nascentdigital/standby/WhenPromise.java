@@ -5,8 +5,11 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
  * Created by tomwark on 2017-05-18.
+ *
+ * @param <T1> the type parameter
+ * @param <T2> the type parameter
+ * @param <T3> the type parameter
  */
-
 class WhenPromise<T1, T2, T3> extends Promise<PromiseValueContainer<T1, T2, T3>> {
 
     // region instance variables
@@ -24,6 +27,13 @@ class WhenPromise<T1, T2, T3> extends Promise<PromiseValueContainer<T1, T2, T3>>
 
     // region constructors
 
+    /**
+     * Instantiates a new When promise.
+     *
+     * @param p1 the p 1
+     * @param p2 the p 2
+     * @param p3 the p 3
+     */
     WhenPromise(Promise<T1> p1, Promise<T2> p2, Promise<T3> p3) {
 
         // call base constructor
@@ -42,6 +52,12 @@ class WhenPromise<T1, T2, T3> extends Promise<PromiseValueContainer<T1, T2, T3>>
         _valueContainer = new PromiseValueContainer<T1, T2, T3>();
     }
 
+    /**
+     * Instantiates a new When promise.
+     *
+     * @param p1 the p 1
+     * @param p2 the p 2
+     */
     WhenPromise(Promise<T1> p1, Promise<T2> p2) {
 
         // call base constructor
@@ -53,6 +69,9 @@ class WhenPromise<T1, T2, T3> extends Promise<PromiseValueContainer<T1, T2, T3>>
 
     // region lifecycle
 
+    /**
+     * Execute promises.
+     */
     void executePromises() {
 
         _firstPromise.always(() -> onPromiseComplete(_firstPromise, 1));

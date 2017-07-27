@@ -2,6 +2,7 @@ package com.nascentdigital.standby_legacy;
 
 /**
  * Created by tomwark on 2017-01-09.
+ * Class that is used to hold up to three strongly typed values.
  */
 
 public class VariadicPromiseValue<T, U, V> {

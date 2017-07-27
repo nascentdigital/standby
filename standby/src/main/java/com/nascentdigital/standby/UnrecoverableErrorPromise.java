@@ -2,12 +2,16 @@ package com.nascentdigital.standby;
 
 /**
  * Created by tomwark on 2017-05-18.
+ *
+ * @param <TResult> the type parameter
  */
-
 class UnrecoverableErrorPromise<TResult> extends ErrorPromise<TResult> {
 
     // region instance variables
 
+    /**
+     * The Error block.
+     */
     protected final ErrorBlock _errorBlock;
 
     // endregion
@@ -15,6 +19,11 @@ class UnrecoverableErrorPromise<TResult> extends ErrorPromise<TResult> {
 
     // region constructors
 
+    /**
+     * Instantiates a new Unrecoverable error promise.
+     *
+     * @param errorBlock the error block
+     */
     UnrecoverableErrorPromise(ErrorBlock errorBlock) {
 
         // call base constructor

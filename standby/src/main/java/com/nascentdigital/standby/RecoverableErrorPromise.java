@@ -2,8 +2,9 @@ package com.nascentdigital.standby;
 
 /**
  * Created by tomwark on 2017-05-18.
+ *
+ * @param <TResult> the type parameter
  */
-
 class RecoverableErrorPromise<TResult> extends ErrorPromise<TResult> {
 
     // region instance variables
@@ -15,6 +16,11 @@ class RecoverableErrorPromise<TResult> extends ErrorPromise<TResult> {
 
     // region constructors
 
+    /**
+     * Instantiates a new Recoverable error promise.
+     *
+     * @param recoveryBlock the recovery block
+     */
     RecoverableErrorPromise(RecoveryBlock recoveryBlock) {
 
         // call base constructor

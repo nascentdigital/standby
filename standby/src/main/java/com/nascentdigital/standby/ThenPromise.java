@@ -2,8 +2,10 @@ package com.nascentdigital.standby;
 
 /**
  * Created by tomwark on 2017-05-18.
+ *
+ * @param <TInput>  the type parameter
+ * @param <TResult> the type parameter
  */
-
 class ThenPromise<TInput, TResult> extends Promise<TResult> {
 
     // region instance variables
@@ -15,6 +17,11 @@ class ThenPromise<TInput, TResult> extends Promise<TResult> {
 
     // region constructors
 
+    /**
+     * Instantiates a new Then promise.
+     *
+     * @param thenBlock the then block
+     */
     ThenPromise(ThenBlock<TInput> thenBlock) {
 
         // call base constructor
@@ -29,6 +36,11 @@ class ThenPromise<TInput, TResult> extends Promise<TResult> {
 
     // region lifecycle
 
+    /**
+     * Execute.
+     *
+     * @param input the input
+     */
     protected void execute(TInput input) {
 
         // try to run the block

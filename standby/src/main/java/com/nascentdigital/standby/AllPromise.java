@@ -5,8 +5,9 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
  * Created by tomwark on 2017-05-18.
+ *
+ * @param <TResult> the type parameter
  */
-
 class AllPromise<TResult> extends Promise<TResult> {
 
     // region instance variables
@@ -21,6 +22,11 @@ class AllPromise<TResult> extends Promise<TResult> {
 
     // region constructors
 
+    /**
+     * Instantiates a new All promise.
+     *
+     * @param promiseList the promise list
+     */
     AllPromise(Promise[] promiseList) {
 
         // call base constructor
@@ -36,6 +42,9 @@ class AllPromise<TResult> extends Promise<TResult> {
 
     // region lifecycle
 
+    /**
+     * Execute promise list.
+     */
     // TODO: make this thread safe
     void executePromiseList() {
 

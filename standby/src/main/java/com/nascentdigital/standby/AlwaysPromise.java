@@ -2,8 +2,9 @@ package com.nascentdigital.standby;
 
 /**
  * Created by tomwark on 2017-05-18.
+ *
+ * @param <TResult> the type parameter
  */
-
 class AlwaysPromise<TResult> extends Promise<TResult> {
 
     // region instance variables
@@ -15,6 +16,11 @@ class AlwaysPromise<TResult> extends Promise<TResult> {
 
     // region constructors
 
+    /**
+     * Instantiates a new Always promise.
+     *
+     * @param alwaysBlock the always block
+     */
     AlwaysPromise(AlwaysBlock alwaysBlock) {
 
         // call base constructor
@@ -29,6 +35,9 @@ class AlwaysPromise<TResult> extends Promise<TResult> {
 
     // region lifecycle
 
+    /**
+     * Execute.
+     */
     protected void execute() {
 
         // run always block
