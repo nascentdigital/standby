@@ -1,1 +1,1 @@
-include ':app', ':standby'
+include ':app', ':standby', ':standby-tests'

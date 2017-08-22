@@ -1,8 +1,5 @@
 package com.nascentdigital.standby;
 
-import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicReferenceArray;
-
 /**
  * Created by tomwark on 2017-05-18.
  *
@@ -74,11 +71,26 @@ class WhenPromise<T1, T2, T3> extends Promise<PromiseValueContainer<T1, T2, T3>>
      */
     void executePromises() {
 
-        _firstPromise.always(() -> onPromiseComplete(_firstPromise, 1));
-        _secondPromise.always(() -> onPromiseComplete(_secondPromise, 2));
+        _firstPromise.always(new AlwaysBlock() {
+            @Override
+            public void execute() {
+                onPromiseComplete(_firstPromise, 1);
+            }
+        });
+        _secondPromise.always(new AlwaysBlock() {
+            @Override
+            public void execute() {
+                onPromiseComplete(_secondPromise, 2);
+            }
+        });
 
         if (_thirdPromise != null) {
-            _thirdPromise.always(() -> onPromiseComplete(_thirdPromise, 3));
+            _thirdPromise.always(new AlwaysBlock() {
+                @Override
+                public void execute() {
+                    onPromiseComplete(_thirdPromise, 3);
+                }
+            });
         }
     }
 

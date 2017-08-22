@@ -53,23 +53,26 @@ class ThenPromise<TInput, TResult> extends Promise<TResult> {
             if (resultOrPromise instanceof Promise) {
 
                 // cast returned promise (may throw)
-                Promise<TResult> promise = (Promise<TResult>)resultOrPromise;
+                final Promise<TResult> promise = (Promise<TResult>)resultOrPromise;
 
                 // resolve current promise when inner promise is completed
-                promise.always(() -> {
+                promise.always(new AlwaysBlock() {
+                    @Override
+                    public void execute() {
 
-                    // resolve if resolved at end
-                    if (promise._state == PromiseState.RESOLVED) {
-                        onResolve(promise._result);
-                    }
-                    // reject if rejected at end
-                    else if (promise._state == PromiseState.REJECTED) {
-                        onReject(promise._rejection.share());
-                    }
-                    // if always block is called and promise is neither resolved nor rejected
-                    // reject with invalid state exception
-                    else {
-                        onReject(new Rejection(new InvalidPromiseStateException(promise)));
+                        // resolve if resolved at end
+                        if (promise._state == PromiseState.RESOLVED) {
+                            onResolve(promise._result);
+                        }
+                        // reject if rejected at end
+                        else if (promise._state == PromiseState.REJECTED) {
+                            onReject(promise._rejection.share());
+                        }
+                        // if always block is called and promise is neither resolved nor rejected
+                        // reject with invalid state exception
+                        else {
+                            onReject(new Rejection(new InvalidPromiseStateException(promise)));
+                        }
                     }
                 });
             }

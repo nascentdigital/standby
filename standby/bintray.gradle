@@ -3,7 +3,7 @@ apply plugin: 'com.jfrog.bintray'
 version = '2.0.1'
 
 task sourcesJar(type: Jar) {
-    from android.sourceSets.main.java.srcDirs
+    from sourceSets.main.java.srcDirs
     classifier = 'sources'
 }
 
@@ -23,10 +23,10 @@ bintray {
     pkg {
         repo = 'Maven'
         userOrg = 'nascent'
-        name = 'standby'
+        name = 'com.nascentdigital.standby'
         desc = 'A fast and flexible collection manipulation framework for Android / Java.'
-        websiteUrl = 'https://github.com/nascentdigital/standby'
-        vcsUrl = 'https://github.com/nascentdigital/standby.git'
+        websiteUrl = 'https://github.com/nascentdigital/com.nascentdigital.standby'
+        vcsUrl = 'https://github.com/nascentdigital/com.nascentdigital.standby.git'
         licenses = ["MIT"]
         publish = true
         publicDownloadNumbers = true
