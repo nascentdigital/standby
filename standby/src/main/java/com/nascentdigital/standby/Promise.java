@@ -1,5 +1,8 @@
 package com.nascentdigital.standby;
 
+import com.nascentdigital.standby.annotations.Group;
+import com.nascentdigital.standby.annotations.GroupType;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -81,6 +84,7 @@ public class Promise<TResult> {
      *
      * @return The current {@link PromiseState} of the promise.
      */
+    @Group (type = GroupType.Properties)
     public PromiseState getState() {
         return _state;
     }
@@ -98,6 +102,7 @@ public class Promise<TResult> {
      * @param value The value to resolve with.
      * @return A resolved promise.
      */
+    @Group (type = GroupType.Creation)
     public static <U> Promise<U> resolve(U value) {
 
        // create new resolved promise
@@ -115,6 +120,7 @@ public class Promise<TResult> {
      * @param error The error that the promise is rejected with.
      * @return A rejected promise.
      */
+    @Group (type = GroupType.Creation)
     public static <U> Promise<U> reject(Exception error) {
 
         // create and return new Promise that is rejected immediately
@@ -133,6 +139,7 @@ public class Promise<TResult> {
      * @param promises The list of promises to resolve on.
      * @return A new promise.
      */
+    @Group (type = GroupType.Creation)
     public static <U> Promise<ArrayList<U>> when(Promise<U>[] promises) {
 
         // create new CollectionWhenPromise with list of promises
@@ -153,6 +160,7 @@ public class Promise<TResult> {
      * @param promises The arraylist of promises to resolve on.
      * @return A new promise.
      */
+    @Group (type = GroupType.Creation)
     public static <U> Promise<ArrayList<U>> when(ArrayList<Promise<U>> promises) {
 
         // create empty array
@@ -174,6 +182,7 @@ public class Promise<TResult> {
      * @param promise3 The third promise.
      * @return A new promise.
      */
+    @Group (type = GroupType.Creation)
     public static <T1, T2, T3> Promise<PromiseValueContainer<T1, T2, T3>> when(Promise<T1> promise1,
         Promise<T2> promise2, Promise<T3> promise3) {
 
@@ -197,6 +206,7 @@ public class Promise<TResult> {
      * @param promise2 The second promise.
      * @return A new promise.
      */
+    @Group (type = GroupType.Creation)
     public static <T1, T2> Promise<PromiseValueContainer<T1, T2, Void>> when(Promise<T1> promise1,
         Promise<T2> promise2) {
 
@@ -212,6 +222,7 @@ public class Promise<TResult> {
      * @param promises An arraylist of promises to be executed.
      * @return A new promise.
      */
+    @Group (type = GroupType.Creation)
     public static Promise<ArrayList<?>> all(ArrayList<Promise<?>> promises) {
 
         // create empty array
@@ -229,6 +240,7 @@ public class Promise<TResult> {
      * @param promises An array of promises to be executed.
      * @return A new promise.
      */
+    @Group (type = GroupType.Creation)
     public static Promise<ArrayList<?>> all(Promise<?>[] promises) {
 
         // create new AllPromise with list of promises
@@ -256,6 +268,7 @@ public class Promise<TResult> {
      * @param block A block of code to be executed when promise is resolved.
      * @return A new promise that represents the value returned by the block. If that value is a promise, this new promise will depend on the inner promise.
      */
+    @Group (type = GroupType.Chaining)
     public <T> Promise<T> then(ThenBlock<TResult> block) {
 
         // create new ThenPromise
@@ -289,6 +302,7 @@ public class Promise<TResult> {
      * @param block A block of code to be executed with the promise is rejected.              If this block throws an error the returned promise is rejected.
      * @return A new promise that represents the value and state of the current promise.
      */
+    @Group (type = GroupType.Chaining)
     public Promise<TResult> error(ErrorBlock block) {
 
         // create new UnrecoverableErrorPromise
@@ -324,6 +338,7 @@ public class Promise<TResult> {
      * @param block A block of code to be executed with the promise is rejected.              If this block throws an error the returned promise is rejected.              If this block calls the recover method on the provided recovery object the returned promise              will be resolved with the value provided.
      * @return A new promise that is rejected or resolved based on the action taken in the recovery block.
      */
+    @Group (type = GroupType.Chaining)
     public Promise<TResult> error(RecoveryBlock block) {
 
         // create new UnrecoverableErrorPromise
@@ -355,6 +370,7 @@ public class Promise<TResult> {
      * @param block A block of code to be executed with the promise is resolved or rejected.
      * @return A new promise that represents the value and state of the current promise.
      */
+    @Group (type = GroupType.Chaining)
     public Promise<TResult> always(AlwaysBlock block) {
 
         // create new AlwaysPromise
@@ -384,6 +400,7 @@ public class Promise<TResult> {
      *
      * @param result the result
      */
+    @Group (type = GroupType.Lifecycle)
     protected void onResolve(TResult result) {
 
         // set result
@@ -414,6 +431,7 @@ public class Promise<TResult> {
      *
      * @param rejection the rejection
      */
+    @Group (type = GroupType.Lifecycle)
     protected void onReject(Rejection rejection) {
 
         // set result
