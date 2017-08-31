@@ -117,4 +117,25 @@ public class Recover {
 
         assertTrue(called.value);
     }
+
+    @Test
+    public void recover_shouldBeAbleToReThrowException() throws Exception {
+
+        Box<Boolean> called = new Box<>(false);
+
+        Promise.reject(new Exception("fail"))
+            .error((error, recovery) -> {
+                throw error;
+            })
+            .then(value -> {
+                fail("Promise should be rejected");
+                return null;
+            })
+            .error(error -> {
+
+                called.value = true;
+            });
+
+        assertTrue(called.value);
+    }
 }
