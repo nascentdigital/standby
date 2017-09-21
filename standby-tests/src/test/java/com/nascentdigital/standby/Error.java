@@ -69,4 +69,17 @@ public class Error {
         assertTrue(thenCalled.value);
         assertTrue(errorCalled.value);
     }
+
+    private Promise<String> createPromiseWithError(String value) {
+
+        return Promise.resolve(value)
+            .then(newValue -> {
+
+                assertTrue(newValue instanceof String);
+                return String.valueOf(5);
+            })
+            .error(error -> {
+                fail();
+            });
+    }
 }

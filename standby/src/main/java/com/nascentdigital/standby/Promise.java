@@ -19,7 +19,7 @@ public class Promise<TResult> {
     /**
      * The Error promises.
      */
-    protected final List<ErrorPromise<TResult>> _errorPromises;
+    protected final List<ErrorPromise> _errorPromises;
     /**
      * The Always promises.
      */
@@ -289,14 +289,14 @@ public class Promise<TResult> {
      * @param block A block of code to be executed with the promise is rejected.              If this block throws an error the returned promise is rejected.
      * @return A new promise that represents the value and state of the current promise.
      */
-    public Promise<TResult> error(ErrorBlock block) {
+    public <U> Promise<U> error(ErrorBlock block) {
 
         // create new UnrecoverableErrorPromise
-        UnrecoverableErrorPromise<TResult> errorPromise = new UnrecoverableErrorPromise<>(block);
+        UnrecoverableErrorPromise<U> errorPromise = new UnrecoverableErrorPromise<>(block);
 
         // if state is resolved, resolve errorPromise
         if (_state == PromiseState.RESOLVED) {
-            errorPromise.onResolve(_result);
+            errorPromise.onResolve((U)_result);
         }
 
         // if state is rejected execute errorPromise
@@ -324,14 +324,14 @@ public class Promise<TResult> {
      * @param block A block of code to be executed with the promise is rejected.              If this block throws an error the returned promise is rejected.              If this block calls the recover method on the provided recovery object the returned promise              will be resolved with the value provided.
      * @return A new promise that is rejected or resolved based on the action taken in the recovery block.
      */
-    public Promise<TResult> error(RecoveryBlock block) {
+    public <U> Promise<U> error(RecoveryBlock block) {
 
         // create new UnrecoverableErrorPromise
-        RecoverableErrorPromise<TResult> errorPromise = new RecoverableErrorPromise<>(block);
+        RecoverableErrorPromise<U> errorPromise = new RecoverableErrorPromise<>(block);
 
         // if state is resolved, resolve errorPromise
         if (_state == PromiseState.RESOLVED) {
-            errorPromise.onResolve(_result);
+            errorPromise.onResolve((U)_result);
         }
 
         // if state is rejected execute errorPromise
