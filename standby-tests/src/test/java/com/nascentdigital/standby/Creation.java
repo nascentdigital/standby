@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -92,5 +93,21 @@ public class Creation {
         }).error(error -> {
             assertNotNull(error);
         });
+    }
+
+    @Test
+    public void promiseResolve_shouldResolveWithNullValue() {
+
+        Box<Boolean> called = new Box(false);
+
+        Promise<Void> promise = Promise.resolve(null);
+
+        promise.then(value -> {
+            assertNull(value);
+            called.value = true;
+            return null;
+        });
+
+        assertTrue(called.value);
     }
 }

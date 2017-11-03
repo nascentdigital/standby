@@ -49,6 +49,13 @@ class CollectionWhenPromise<TResult, TElement> extends Promise<TResult> {
     // TODO: make this thread safe
     void executePromiseList() {
 
+        // resolve immediately if list is empty
+        if (_promiseList.length < 1) {
+            TResult finalValues = (TResult)arrayFrom(_values);
+            onResolve(finalValues);
+            return;
+        }
+
         // create counter to hold current index
         int i = 0;
 

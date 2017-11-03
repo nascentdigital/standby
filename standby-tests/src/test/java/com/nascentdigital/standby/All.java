@@ -5,6 +5,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -109,6 +110,42 @@ public class All {
         });
 
         AsyncPromise.executeTriggerAndJoin(trigger);
+
+        assertTrue(called.value);
+    }
+
+    @Test
+    public void all_shouldResolveIfCalledWithEmptyArray() throws InterruptedException {
+        Box<Boolean> called = new Box<>(false);
+
+        Promise.all(new Promise[]{})
+            .then(value -> {
+
+                assertNotNull(value);
+                called.value = true;
+                return null;
+            })
+            .error(error -> {
+                fail();
+            });
+
+        assertTrue(called.value);
+    }
+
+    @Test
+    public void all_shouldResolveIfCalledWithEmptyArrayList() throws InterruptedException {
+        Box<Boolean> called = new Box<>(false);
+
+        Promise.all(new ArrayList<Promise<?>>())
+                .then(value -> {
+
+                    assertNotNull(value);
+                    called.value = true;
+                    return null;
+                })
+                .error(error -> {
+                    fail();
+                });
 
         assertTrue(called.value);
     }

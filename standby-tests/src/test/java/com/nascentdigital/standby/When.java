@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 
+import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -180,6 +181,43 @@ public class When {
 
         AsyncPromise.executeTriggerAndJoin(trigger1);
         AsyncPromise.executeTriggerAndJoin(trigger2);
+
+        assertTrue(called.value);
+    }
+
+    @Test
+    public void when_shouldResolveWhenGivenAnEmptyArray() throws InterruptedException {
+
+        Box<Boolean> called = new Box<>(false);
+        Promise.when(new Promise[]{})
+            .then(value -> {
+
+                assertNotNull(value);
+                called.value = true;
+                return null;
+            })
+            .error(error -> {
+                fail();
+            });
+
+        assertTrue(called.value);
+    }
+
+
+    @Test
+    public void when_shouldResolveWhenGivenAnEmptyArrayList() throws InterruptedException {
+
+        Box<Boolean> called = new Box<>(false);
+        Promise.when(new ArrayList<Promise<String>>())
+                .then(value -> {
+
+                    assertNotNull(value);
+                    called.value = true;
+                    return null;
+                })
+                .error(error -> {
+                    fail();
+                });
 
         assertTrue(called.value);
     }
