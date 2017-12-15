@@ -153,12 +153,12 @@ public class Promise<TResult> {
      * @param promises The arraylist of promises to resolve on.
      * @return A new promise.
      */
-    public static <U> Promise<ArrayList<U>> when(ArrayList<Promise<U>> promises) {
+    public static <U> Promise<ArrayList<U>> when(List<Promise<U>> promises) {
 
         // create empty array
         Promise<U>[] promiseArray = new Promise[promises.size()];
 
-        // called base method with new array from arraylist
+        // called base method with new array from list
         return Promise.when(promises.toArray(promiseArray));
     }
 
@@ -212,7 +212,7 @@ public class Promise<TResult> {
      * @param promises An arraylist of promises to be executed.
      * @return A new promise.
      */
-    public static Promise<ArrayList<?>> all(ArrayList<Promise<?>> promises) {
+    public static Promise<ArrayList<?>> all(List<Promise<?>> promises) {
 
         // create empty array
         Promise[] promiseArray = new Promise[promises.size()];

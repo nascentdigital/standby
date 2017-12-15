@@ -3,6 +3,7 @@ package com.nascentdigital.standby;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertEquals;
@@ -219,6 +220,25 @@ public class When {
                     fail();
                 });
 
+        assertTrue(called.value);
+    }
+
+    @Test
+    public void when_shouldAcceptAnyListSubclass() throws  InterruptedException {
+
+        Box<Boolean> called = new Box<>(false);
+        List<Promise<String>> list = new ArrayList<>();
+        list.add(Promise.resolve("foo"));
+        Promise.when(list)
+                .then(value -> {
+
+                    assertNotNull(value);
+                    called.value = true;
+                    return null;
+                })
+                .error(error -> {
+                    fail();
+                });
         assertTrue(called.value);
     }
 }

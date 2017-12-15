@@ -3,6 +3,7 @@ package com.nascentdigital.standby;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -147,6 +148,25 @@ public class All {
                     fail();
                 });
 
+        assertTrue(called.value);
+    }
+
+    @Test
+    public void all_shouldAcceptAnyListSubclass() throws  InterruptedException {
+
+        Box<Boolean> called = new Box<>(false);
+        List<Promise<?>> list = new ArrayList<>();
+        list.add(Promise.resolve("foo"));
+        Promise.all(list)
+                .then(value -> {
+
+                    assertNotNull(value);
+                    called.value = true;
+                    return null;
+                })
+                .error(error -> {
+                    fail();
+                });
         assertTrue(called.value);
     }
 }
